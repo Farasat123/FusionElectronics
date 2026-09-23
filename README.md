@@ -728,10 +728,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ## Creator
 
-Fusion Electronics was created with ❤️ by:
-
-- **Son Nguyen** - [hoangsonww](https://github.com/hoangsonww)
-- **Email:** [hoangson091104@gmail.com](mailto:hoangson091104@gmail.com).
+Fusion Electronics was created with ❤️ by Syed Farasat Abbas
 
 ---
 
