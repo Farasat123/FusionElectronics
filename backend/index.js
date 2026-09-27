@@ -21,7 +21,11 @@ const {
 const app = express();
 
 // Middleware
-app.use(cors());
+const allowedOrigin = process.env.ALLOWED_ORIGIN;
+app.use(cors(allowedOrigin ? {
+  origin: [allowedOrigin, 'http://localhost:3000'],
+  credentials: true,
+} : {})); // allow all origins if ALLOWED_ORIGIN is not set
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -41,7 +45,8 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/search', require('./routes/search'));
 app.use('/api/auth', authRoutes);
 
-// MongoDB connection
+// MongoDB connection — promise is created eagerly at module load so
+// Vercel serverless cold-starts don't race against the first request.
 let mongoConnectionPromise = null;
 
 async function connectToMongoDB() {
@@ -67,6 +72,14 @@ async function connectToMongoDB() {
   }
 
   await mongoConnectionPromise;
+}
+
+// Kick off the connection immediately so it's ready before requests arrive.
+// On Vercel serverless this runs at cold-start, removing the race condition.
+if (process.env.MONGO_URI) {
+  connectToMongoDB().catch(err =>
+    console.error('Eager MongoDB connect failed:', err)
+  );
 }
 
 // Ensure database connection before API requests
