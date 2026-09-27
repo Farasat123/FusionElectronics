@@ -109,6 +109,23 @@ setupSwaggerJson(app);
 setupSwaggerUi(app);
 
 // ─── API Routes ────────────────────────────────────────────────────────────────
+// Health/Status endpoint for GET /api
+app.get(['/api', '/api/'], (req, res) => {
+  res.json({
+    status: 'online',
+    message: 'Fusion Electronics API is running',
+    version: '1.1.1',
+    endpoints: {
+      products: '/api/products',
+      search: '/api/search?q={query}',
+      checkout: '/api/checkout',
+      orders: '/api/orders',
+      auth: '/api/auth',
+      docs: '/api-docs',
+    },
+  });
+});
+
 app.use('/api/products', productRoutes);
 app.use('/api/checkout', checkoutRoutes);
 app.use('/api/orders', orderRoutes);
