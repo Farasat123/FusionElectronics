@@ -3,14 +3,19 @@ import axios from 'axios';
 const resolveBaseURL = () => {
   const envUrl = process.env.REACT_APP_API_BASE_URL || process.env.REACT_APP_API_URL;
   if (envUrl) {
-    return envUrl.replace(/\/$/, '');
+    let clean = envUrl.trim().replace(/\/$/, '');
+    clean = clean.replace(/\/api-docs$/, '');
+    if (!clean.endsWith('/api')) {
+      clean = `${clean}/api`;
+    }
+    return clean;
   }
 
   if (process.env.REACT_APP_API_USE_PROXY === 'true') {
     return '/api';
   }
 
-  return 'https://fusion-electronics-api.vercel.app/api';
+  return 'https://fusion-electronics-backend-9fjfr0gsu.vercel.app/api';
 };
 
 export const API_BASE_URL = resolveBaseURL();

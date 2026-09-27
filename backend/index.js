@@ -22,10 +22,28 @@ const app = express();
 
 // Middleware
 const allowedOrigin = process.env.ALLOWED_ORIGIN;
-app.use(cors(allowedOrigin ? {
-  origin: [allowedOrigin, 'http://localhost:3000'],
-  credentials: true,
-} : {})); // allow all origins if ALLOWED_ORIGIN is not set
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      const cleanOrigin = origin.replace(/\/$/, '');
+      if (
+        !allowedOrigin ||
+        cleanOrigin === allowedOrigin.replace(/\/$/, '') ||
+        cleanOrigin === 'https://fusion-electronics-frontend01.vercel.app' ||
+        cleanOrigin.endsWith('.vercel.app') ||
+        cleanOrigin.includes('localhost')
+      ) {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  })
+);
+app.options('*', cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -96,6 +114,13 @@ app.use('/api/checkout', checkoutRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/search', require('./routes/search'));
 app.use('/api/auth', authRoutes);
+
+// Fallback mounts: if any client accidentally calls /api-docs/products etc., serve them gracefully
+app.use('/api-docs/products', productRoutes);
+app.use('/api-docs/checkout', checkoutRoutes);
+app.use('/api-docs/orders', orderRoutes);
+app.use('/api-docs/search', require('./routes/search'));
+app.use('/api-docs/auth', authRoutes);
 
 // ─── Local development server ─────────────────────────────────────────────────
 if (require.main === module) {
