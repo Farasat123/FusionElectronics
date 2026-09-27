@@ -29,29 +29,14 @@ app.use(cors(allowedOrigin ? {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Redirect root to /api-docs
-app.get('/', (req, res) => {
-  res.redirect('/api-docs');
-});
-
-// Setup Swagger
-setupSwaggerJson(app);
-setupSwaggerUi(app);
-
-// Routes
-app.use('/api/products', productRoutes);
-app.use('/api/checkout', checkoutRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/search', require('./routes/search'));
-app.use('/api/auth', authRoutes);
-
-// MongoDB connection — promise is created eagerly at module load so
-// Vercel serverless cold-starts don't race against the first request.
+// ─── MongoDB connection ────────────────────────────────────────────────────────
+// Promise is created eagerly at module load so Vercel serverless
+// cold-starts don't race against the first request.
 let mongoConnectionPromise = null;
 
 async function connectToMongoDB() {
   if (mongoose.connection.readyState === 1) {
-    return;
+    return; // already connected
   }
 
   if (!process.env.MONGO_URI) {
@@ -74,7 +59,7 @@ async function connectToMongoDB() {
   await mongoConnectionPromise;
 }
 
-// Kick off the connection immediately so it's ready before requests arrive.
+// Kick off the connection immediately so it is ready before requests arrive.
 // On Vercel serverless this runs at cold-start, removing the race condition.
 if (process.env.MONGO_URI) {
   connectToMongoDB().catch(err =>
@@ -82,7 +67,7 @@ if (process.env.MONGO_URI) {
   );
 }
 
-// Ensure database connection before API requests
+// ─── IMPORTANT: DB middleware MUST come before routes ─────────────────────────
 app.use(async (req, res, next) => {
   try {
     await connectToMongoDB();
@@ -96,7 +81,23 @@ app.use(async (req, res, next) => {
   }
 });
 
-// Local development server
+// ─── Static / Swagger routes ──────────────────────────────────────────────────
+// Redirect root to /api-docs
+app.get('/', (req, res) => {
+  res.redirect('/api-docs');
+});
+
+setupSwaggerJson(app);
+setupSwaggerUi(app);
+
+// ─── API Routes ────────────────────────────────────────────────────────────────
+app.use('/api/products', productRoutes);
+app.use('/api/checkout', checkoutRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/search', require('./routes/search'));
+app.use('/api/auth', authRoutes);
+
+// ─── Local development server ─────────────────────────────────────────────────
 if (require.main === module) {
   const PORT = process.env.BACKEND_PORT || process.env.PORT || 8000;
 
@@ -137,7 +138,7 @@ if (require.main === module) {
     .catch((err) => {
       console.error('❌ Failed to start local server:', err);
     });
-  }
+}
 
 // Export Express app for Vercel
 module.exports = app;
